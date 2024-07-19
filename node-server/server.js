@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const axios = require("axios");
 const app = express();
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
@@ -28,7 +29,7 @@ async function connectToMongo() {
 connectToMongo().catch(console.error);
 
 app.get("/", (req, res) => {
-  res.send({ message: "Serving...(1)" });
+  res.send({ message: "Serving..." });
 });
 
 app.get("/read", async (req, res) => {
@@ -72,3 +73,18 @@ app.get("/api", async (req, res) => {
 app.listen(3002, () => {
   console.log("Server running on port 3002");
 });
+
+// Function to make HTTP requests at regular intervals
+async function hitURL() {
+  try {
+    const response = await axios.get(
+      "https://node-server-fawn.vercel.app/read"
+    );
+    console.log("API Response:", response.data);
+  } catch (error) {
+    console.error("Error hitting URL:", error);
+  }
+}
+
+// Set an interval to hit the URL every 5 minutes (300000 milliseconds)
+setInterval(hitURL, 180000);
