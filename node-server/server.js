@@ -1,20 +1,40 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
+const { MongoClient } = require("mongodb");
 
 app.use(cors());
+
+const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017";
+const client = new MongoClient(mongoUri);
+
+let db, countersCollection;
+
+async function connectToMongo() {
+  await client.connect();
+  db = client.db("analyticsDB");
+  countersCollection = db.collection("counters");
+
+  // Ensure there's an initial document in the collection
+  const initialData = { pageviews: 0, visits: 0 };
+  await countersCollection.updateOne(
+    { _id: "counters" },
+    { $setOnInsert: initialData },
+    { upsert: true }
+  );
+}
+
+connectToMongo().catch(console.error);
 
 app.get("/", (req, res) => {
   res.send({ message: "Serving...(1)" });
 });
 
-app.get("/read", (req, res) => {
+app.get("/read", async (req, res) => {
   try {
-    const json = fs.readFileSync(path.join(__dirname, "count.json"), "utf-8");
-    const obj = JSON.parse(json);
-    res.send(obj);
+    const counters = await countersCollection.findOne({ _id: "counters" });
+    res.send(counters);
   } catch (err) {
     console.error(err);
     res
@@ -23,24 +43,24 @@ app.get("/read", (req, res) => {
   }
 });
 
-app.get("/api", function (req, res) {
+app.get("/api", async (req, res) => {
   if (req.url === "/favicon.ico") {
     return res.end();
   }
 
   try {
-    const json = fs.readFileSync(path.join(__dirname, "count.json"), "utf-8");
-    const obj = JSON.parse(json);
+    const update = {
+      $inc: { pageviews: 1 },
+    };
 
-    obj.pageviews = obj.pageviews + 1;
     if (req.query.type === "visit-pageview") {
-      obj.visits = obj.visits + 1;
+      update.$inc.visits = 1;
     }
 
-    const newJSON = JSON.stringify(obj);
-    fs.writeFileSync(path.join(__dirname, "count.json"), newJSON);
+    await countersCollection.updateOne({ _id: "counters" }, update);
 
-    res.send(obj);
+    const counters = await countersCollection.findOne({ _id: "counters" });
+    res.send(counters);
   } catch (err) {
     console.error(err);
     res
