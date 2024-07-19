@@ -37,7 +37,8 @@
       }
 
       function updateCounter(type) {
-        fetch("http://127.0.0.1:3002/api?" + type)
+        // fetch("http://127.0.0.1:3002/api?" + type)
+        fetch("https://node-server-fawn.vercel.app/api?" + type)
           .then((res) => res.json())
           .then((data) => {
             pageviewsCount.textContent = data.pageviews;

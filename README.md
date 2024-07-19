@@ -15,6 +15,6 @@ This Node.js application is designed to count page views and visits of a webpage
 - JavaScript - (fetch data, browser storage and display in webpage)
 - Node.js (Server)
 - Express.js (Logic)
-- JSON File (To store views and visits data)
+- MongoDB (To store views and visits data)
 
 See Live on [Page View and Visit Counter]()
